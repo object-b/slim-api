@@ -11,6 +11,9 @@ return function (App $app) {
         return new \Slim\Views\PhpRenderer($settings['template_path']);
     };
 
+    // App Service Providers
+    $container->register(new \App\Services\EloquentServiceProvider());
+
     // monolog
     $container['logger'] = function ($c) {
         $settings = $c->get('settings')['logger'];
@@ -19,4 +22,15 @@ return function (App $app) {
         $logger->pushHandler(new \Monolog\Handler\StreamHandler($settings['path'], $settings['level']));
         return $logger;
     };
+
+    // Service factory for the ORM
+    // $container['db'] = function ($container) {
+    //     $capsule = new \Illuminate\Database\Capsule\Manager;
+    //     $capsule->addConnection($container['settings']['db']);
+
+    //     $capsule->setAsGlobal();
+    //     $capsule->bootEloquent();
+
+    //     return $capsule;
+    // };  
 };

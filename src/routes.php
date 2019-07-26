@@ -1,17 +1,21 @@
 <?php
 
 use Slim\App;
-use Slim\Http\Request;
-use Slim\Http\Response;
+use App\Controllers\ApiController;
 
 return function (App $app) {
     $container = $app->getContainer();
 
-    $app->get('/[{name}]', function (Request $request, Response $response, array $args) use ($container) {
-        // Sample log message
-        $container->get('logger')->info("Slim-Skeleton '/' route");
+    // Получить все объекты
+    $app->get('/objects', ApiController::class . ':index');
 
-        // Render index view
-        return $container->get('renderer')->render($response, 'index.phtml', $args);
+    // Показать одиночный объект
+    $app->get('/objects/{id:[0-9]+}', function ($request, $response, $args) {
+
+    });
+
+    // Создать новый объект
+    $app->post('/objects', function ($request, $response, $args) {
+
     });
 };
