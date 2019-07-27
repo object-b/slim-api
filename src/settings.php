@@ -15,11 +15,6 @@ return [
         'displayErrorDetails' => env('DEBUG', true), // set to false in production
         'addContentLengthHeader' => false, // Allow the web server to send the content-length header
 
-        // Renderer settings
-        'renderer' => [
-            'template_path' => __DIR__ . '/../templates/',
-        ],
-
         'database' => [
             'driver' => 'mysql',
             'host' => env('DB_HOST'),

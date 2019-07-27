@@ -13,10 +13,12 @@ class User extends Model
 
     protected $hidden = [
         'password',
+        'email_verified_at',
+        'remember_token'
     ];
-
-    public function getSomething()
+    
+    public static function getByToken($token)
     {
-        return 1;
+        return self::where('api_token', $token)->first();
     }
 }

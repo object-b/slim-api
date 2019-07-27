@@ -1,21 +1,21 @@
 <?php
 
 use Slim\App;
-use App\Controllers\ApiController;
+use App\Controllers\ObjectController;
+use App\Middleware\AuthMiddleware;
 
 return function (App $app) {
-    $container = $app->getContainer();
+    $app->group('/api', function () use ($app) {
+        // Получить все объекты
+        $app->get('/objects', ObjectController::class . ':index');
 
-    // Получить все объекты
-    $app->get('/objects', ApiController::class . ':index');
+        // Показать одиночный объект
+        $app->get('/objects/{id:[0-9]+}', ObjectController::class . ':show');
 
-    // Показать одиночный объект
-    $app->get('/objects/{id:[0-9]+}', function ($request, $response, $args) {
+        // Создать новый объект
+        $app->post('/objects', ObjectController::class . ':store');
 
-    });
-
-    // Создать новый объект
-    $app->post('/objects', function ($request, $response, $args) {
-
-    });
+        // Удалить одиночный объект
+        $app->delete('/objects', ObjectController::class . ':destroy');
+    })->add(new AuthMiddleware());
 };
