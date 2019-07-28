@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\User;
 
 use Illuminate\Database\Eloquent\Model;
 
-class UserRole extends Model
+class Status extends Model
 {
-    protected $table = 'user_roles';
+    protected $table = 'user_statuses';
     protected $guarded = [
         'id',
     ];

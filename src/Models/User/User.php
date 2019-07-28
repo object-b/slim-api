@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\User;
 
 use Illuminate\Database\Eloquent\Model;
 
@@ -20,5 +20,15 @@ class User extends Model
     public static function getByToken($token)
     {
         return self::where('api_token', $token)->first();
+    }
+
+    public function status()
+    {
+        return $this->hasOne('App\Models\User\Status', 'id', 'user_status_id');
+    }
+
+    public function role()
+    {
+        return $this->hasOne('App\Models\User\Role', 'id', 'user_role_id');
     }
 }

@@ -10,4 +10,24 @@ class Event extends Model
     protected $guarded = [
         'id',
     ];
+
+    public function user()
+    {
+        return $this->hasOne('App\Models\User\User', 'id', 'user_id');
+    }
+
+    public function object()
+    {
+        return $this->hasOne('App\Models\Object\Object', 'id');
+    }
+
+    public function status()
+    {
+        return $this->hasOne('App\Models\Object\Status', 'id', 'object_status_id');
+    }
+
+    public function description()
+    {
+        return $this->hasOne('App\Models\Object\Description', 'id');
+    }
 }

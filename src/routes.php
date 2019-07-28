@@ -16,6 +16,6 @@ return function (App $app) {
         $app->post('/objects', ObjectController::class . ':store');
 
         // Удалить одиночный объект
-        $app->delete('/objects', ObjectController::class . ':destroy');
+        $app->delete('/objects/{id:[0-9]+}', ObjectController::class . ':destroy');
     })->add(new AuthMiddleware());
 };
