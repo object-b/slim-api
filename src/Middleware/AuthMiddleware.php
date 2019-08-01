@@ -20,21 +20,22 @@ class AuthMiddleware
     public function __invoke(Request $request, Response $response, $next)
     {
         if (!$request->hasHeader('X-Authorization')) {
-            return $response->withJson([
-                'message' => 'Required token authentication.'
-            ], 401);
-        } elseif (!$this->tokenValid($request)) {
-            return $response->withJson([
-                'message' => 'У вашего ключа истёк срок действия. Пожалуйста, перезайдите.'
-            ], 401);
+            return $response->withJson(['error' => 'Доступ запрещён.'], 401);
+        }
+        
+        elseif ($this->keyIsInvalid($request)) {
+            return $response->withJson(['error' => 'Ваш ключ недействителен.'], 401);
         }
 
         return $next($request, $response);
     }
 
-    public function tokenValid(Request $request)
+    public function keyIsInvalid(Request $request)
     {
-        if (User::getByToken($request->getHeader('X-Authorization')[0])) {
+        // Если пользователь с таким ключом не найден
+        if (
+            !User::getByApiKey($request->getHeader('X-Authorization')[0])
+        ) {
             return true;
         }
 

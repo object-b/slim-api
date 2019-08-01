@@ -6,32 +6,33 @@ use Slim\Http\Request;
 use Slim\Http\Response;
 use App\Models\Object\Object;
 use App\Models\Object\Address;
+use App\Models\Object\Status as ObjectStatus;
 use App\Models\Object\Description;
 use App\Models\Object\Event;
 use App\Models\User\User;
 
 class ObjectController
 {
-    protected $token = '';
+    protected $apiKey = '';
 
     public function __construct($c)
     {
-        $this->token = $c->request->getHeader('X-Authorization')[0];
+        $this->apiKey = $c->request->getHeader('X-Authorization')[0];
     }
 
     public function index($request, $response, $args)
     {
         $data = [];
     
-        foreach (Object::all() as $ob) {
+        foreach (Object::orderBy('created_at', 'desc')->get() as $ob) {
             $data[] = [
                 'id' => $ob->id,
                 'status' => $ob->status->name,
                 'author' => $ob->user->name,
                 'date' => $this->getDate($ob->created_at),
-                'firstImage' => 'https://placekitten.com/330/330',
-                'type' => 'Тип',
-                'size' => 'Размер',
+                'firstImage' => 'https://placekitten.com/'. rand(300, 400) .'/' . rand(300, 400),
+                'type' => 'Заглушка',
+                'size' => 'Заглушка',
             ];
         }
 
@@ -40,7 +41,7 @@ class ObjectController
 
     public function show($request, $response, $args)
     {
-        //$user = User::getByToken($this->token);
+        //$user = User::getByApiKey($this->apiKey);
         $object = Object::find($args['id']);
         $events = [];
 
@@ -63,8 +64,8 @@ class ObjectController
                 'https://placekitten.com/340/340',
                 'https://placekitten.com/350/350',
             ],
-            'type' => 'Тип',
-            'size' => 'Размер',
+            'type' => 'Заглушка',
+            'size' => 'Заглушка',
         ];
 
         return $response->withJson($data, 200);
@@ -72,16 +73,16 @@ class ObjectController
 
     public function store($request, $response, $args)
     {
-        $user = User::getByToken($this->token);
+        $user = User::getByApiKey($this->apiKey);
         $body = $request->getParsedBody();
 
         $object = Object::create([
             'user_id' => $user->id,
             'points' => 0,
-            'object_status_id' => 1, // Опубликовано
+            'object_status_id' => ObjectStatus::PUBLISHED,
         ]);
 
-        Address::create([
+        $address = Address::create([
             'object_id' => $object->id,
             'display_name' => $body['address']['display_name'],
             'city' => $body['address']['city'],
@@ -99,21 +100,21 @@ class ObjectController
             'description' => $body['description']['description'],
         ]);
 
-        Event::create([
+        $event = Event::create([
             'object_id' => $object->id,
             'user_id' => $user->id,
-            'object_status_id' => 1, // Опубликовано
+            'object_status_id' => ObjectStatus::PUBLISHED,
             'object_description_id' => $description->id,
         ]);
 
-        return $response->withJson(true, 201);
+        return $response->withJson($object->id, 201);
     }
 
     public function destroy($request, $response, $args)
     {
-        $object = Object::destroy($args['id']);
+        $object_status = Object::destroy($args['id']);
         
-        return $response->withJson($object, 200);
+        return $response->withJson($object_status, 200);
     }
 
     public function getDate($created_at)

@@ -17,9 +17,9 @@ class User extends Model
         'remember_token'
     ];
     
-    public static function getByToken($token)
+    public static function getByApiKey($key)
     {
-        return self::where('api_token', $token)->first();
+        return self::where('api_key', $key)->first();
     }
 
     public function status()
