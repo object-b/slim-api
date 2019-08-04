@@ -10,6 +10,7 @@ use App\Models\Object\Status as ObjectStatus;
 use App\Models\Object\Description;
 use App\Models\Object\Event;
 use App\Models\User\User;
+use \Illuminate\Pagination\Paginator;
 
 class ObjectController
 {
@@ -20,26 +21,52 @@ class ObjectController
         $this->apiKey = $c->request->getHeader('X-Authorization')[0];
     }
 
-    public function index($request, $response, $args)
+    public function getAll($request, $response, $args)
     {
         $data = [];
-    
-        foreach (Object::orderBy('created_at', 'desc')->get() as $ob) {
+        $page = ($request->getParam('page', 0) > 0) ? $request->getParam('page') : 1;
+        // Количество объектов на страницу
+        $limit = 10;
+        // Задаем изначальную страницу для laravel paginate
+        Paginator::currentPageResolver(function () use ($page) { return $page; });
+        // Получаем определенное кол-во объектов в соответствие с условием
+        $objects = Object::where([
+            ['object_status_id', '!=', ObjectStatus::BANNED],
+        ])->orderBy('created_at', 'desc')->paginate($limit);
+
+        // Fake object
+        // $data[] = [
+        //     'id' => 999,
+        //     'status' => Object::first()->status->name,
+        //     'author' => Object::first()->user->name,
+        //     'date' => $this->getDate(Object::first()->created_at),
+        //     'firstImage' => '',
+        //     'type' => 'Бытовые отходы, стекло, пластик, продукты',
+        //     'size' => 'Машина',
+        // ];
+
+        foreach ($objects as $ob) {
             $data[] = [
                 'id' => $ob->id,
                 'status' => $ob->status->name,
                 'author' => $ob->user->name,
                 'date' => $this->getDate($ob->created_at),
-                'firstImage' => 'https://placekitten.com/'. rand(300, 400) .'/' . rand(300, 400),
-                'type' => 'Заглушка',
-                'size' => 'Заглушка',
+                'firstImage' => 'https://via.placeholder.com/'. rand(300, 500) . 'x' . rand(300, 500),
+                'type' => 'Бытовые отходы, стекло, пластик, продукты',
+                'size' => 'Машина',
             ];
         }
 
-        return $response->withJson($data, 200);
+        return $response->withJson([
+            'total' => $objects->total(),
+            'currentPage' => $objects->currentPage(),
+            'maxPages' => $objects->lastPage(),
+            'hasMorePages' => $objects->hasMorePages(),
+            'data' => $data,
+        ], 200);
     }
 
-    public function show($request, $response, $args)
+    public function getOne($request, $response, $args)
     {
         //$user = User::getByApiKey($this->apiKey);
         $object = Object::find($args['id']);
@@ -86,8 +113,8 @@ class ObjectController
             'object_id' => $object->id,
             'display_name' => $body['address']['display_name'],
             'city' => $body['address']['city'],
-            'city_district' => $body['address']['city_district'],
-            'county' => $body['address']['county'],
+            'city_district' => $body['address']['city_district'], // Городской район, может быть пустым
+            'county' => $body['address']['county'], // Округ, может быть пустым
             'state' => $body['address']['state'],
             'country' => $body['address']['country'],
             'latitude' => $body['address']['latitude'],
