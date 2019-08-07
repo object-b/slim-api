@@ -13,12 +13,12 @@ class Event extends Model
 
     public function user()
     {
-        return $this->hasOne('App\Models\User\User', 'id', 'user_id');
+        return $this->hasOne('App\Models\User\BaseUser', 'id', 'user_id');
     }
 
     public function object()
     {
-        return $this->hasOne('App\Models\Object\Object', 'id');
+        return $this->hasOne('App\Models\Object\BaseObject', 'id');
     }
 
     public function status()
@@ -28,6 +28,6 @@ class Event extends Model
 
     public function description()
     {
-        return $this->hasOne('App\Models\Object\Description', 'id');
+        return $this->hasOne('App\Models\Object\Description', 'id', 'object_description_id');
     }
 }

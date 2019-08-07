@@ -4,12 +4,12 @@ namespace App\Controllers;
 
 use Slim\Http\Request;
 use Slim\Http\Response;
-use App\Models\Object\Object;
+use App\Models\Object\BaseObject;
 use App\Models\Object\Address;
 use App\Models\Object\Status as ObjectStatus;
 use App\Models\Object\Description;
 use App\Models\Object\Event;
-use App\Models\User\User;
+use App\Models\User\BaseUser;
 use \Illuminate\Pagination\Paginator;
 
 class ObjectController
@@ -30,16 +30,16 @@ class ObjectController
         // Задаем изначальную страницу для laravel paginate
         Paginator::currentPageResolver(function () use ($page) { return $page; });
         // Получаем определенное кол-во объектов в соответствие с условием
-        $objects = Object::where([
+        $objects = BaseObject::where([
             ['object_status_id', '!=', ObjectStatus::BANNED],
         ])->orderBy('created_at', 'desc')->paginate($limit);
 
         // Fake object
         // $data[] = [
         //     'id' => 999,
-        //     'status' => Object::first()->status->name,
-        //     'author' => Object::first()->user->name,
-        //     'date' => $this->getDate(Object::first()->created_at),
+        //     'status' => BaseObject::first()->status->name,
+        //     'author' => BaseObject::first()->user->name,
+        //     'date' => $this->getDate(BaseObject::first()->created_at),
         //     'firstImage' => '',
         //     'type' => 'Бытовые отходы, стекло, пластик, продукты',
         //     'size' => 'Машина',
@@ -49,7 +49,7 @@ class ObjectController
             $data[] = [
                 'id' => $ob->id,
                 'status' => $ob->status->name,
-                'author' => $ob->user->name,
+                'author' => $ob->creator->name,
                 'date' => $this->getDate($ob->created_at),
                 'firstImage' => 'https://via.placeholder.com/'. rand(300, 500) . 'x' . rand(300, 500),
                 'type' => 'Бытовые отходы, стекло, пластик, продукты',
@@ -68,8 +68,14 @@ class ObjectController
 
     public function getOne($request, $response, $args)
     {
-        //$user = User::getByApiKey($this->apiKey);
-        $object = Object::find($args['id']);
+        //$user = BaseUser::getByApiKey($this->apiKey);
+        try {
+            $object = BaseObject::findOrFail($args['id']);
+        } catch (\Exception $e) {
+            return $response->withJson([
+                'error' => 'Объект не найден.'
+            ], 404);
+        }
         $events = [];
 
         foreach ($object->events as $ev) {
@@ -100,11 +106,11 @@ class ObjectController
 
     public function store($request, $response, $args)
     {
-        $user = User::getByApiKey($this->apiKey);
+        $user = BaseUser::getByApiKey($this->apiKey);
         $body = $request->getParsedBody();
 
-        $object = Object::create([
-            'user_id' => $user->id,
+        $object = BaseObject::create([
+            'creator_id' => $user->id,
             'points' => 0,
             'object_status_id' => ObjectStatus::PUBLISHED,
         ]);
@@ -139,9 +145,9 @@ class ObjectController
 
     public function destroy($request, $response, $args)
     {
-        $object_status = Object::destroy($args['id']);
+        $object_status = BaseObject::destroy($args['id']);
         
-        return $response->withJson($object_status, 200);
+        return $response->withJson((bool)$object_status, 200);
     }
 
     public function getDate($created_at)

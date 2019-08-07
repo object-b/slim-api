@@ -4,12 +4,12 @@ namespace App\Controllers;
 
 use Slim\Http\Request;
 use Slim\Http\Response;
-use App\Models\Object\Object;
+use App\Models\Object\BaseObject;
 use App\Models\Object\Address;
 use App\Models\Object\Status as ObjectStatus;
 use App\Models\Object\Description;
 use App\Models\Object\Event;
-use App\Models\User\User;
+use App\Models\User\BaseUser;
 use Faker\Factory;
 
 class MapController
@@ -55,15 +55,15 @@ class MapController
                 ];
             }
 
-            User::insert($user_data);
+            BaseUser::insert($user_data);
         }
 
-        $user_ids = User::all()->pluck('id')->all();
+        $user_ids = BaseUser::all()->pluck('id')->all();
 
         if ($create_objects) {
             for ($i = 0; $i < $records; $i++) { 
                 $object_data[] = [
-                    'user_id' => $user_ids[$i],
+                    'creator_id' => $user_ids[$i],
                     'points' => 0,
                     'object_status_id' => ObjectStatus::PUBLISHED,
                     'created_at' => $faker->dateTime(),
@@ -71,10 +71,10 @@ class MapController
                 ];
             }
 
-            Object::insert($object_data);
+            BaseObject::insert($object_data);
         }
 
-        $object_ids = Object::all()->pluck('id')->all();
+        $object_ids = BaseObject::all()->pluck('id')->all();
 
         for ($i = 0; $i < $records; $i++) { 
             $address_data[] = [
@@ -112,6 +112,7 @@ class MapController
                 'user_id' => $user_ids[$i],
                 'object_status_id' => ObjectStatus::PUBLISHED,
                 'object_description_id' => $desc_ids[$i],
+                'created_at' => $faker->dateTime(),
             ];
         }
 

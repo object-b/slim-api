@@ -4,7 +4,7 @@ namespace App\Middleware;
 
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
-use App\Models\User\User;
+use App\Models\User\BaseUser;
 
 class AuthMiddleware
 {
@@ -23,19 +23,17 @@ class AuthMiddleware
             return $response->withJson(['error' => 'Доступ запрещён.'], 401);
         }
         
-        elseif ($this->keyIsInvalid($request)) {
+        elseif ($this->keyIsInvalid($request->getHeader('X-Authorization')[0])) {
             return $response->withJson(['error' => 'Ваш ключ недействителен.'], 401);
         }
 
         return $next($request, $response);
     }
 
-    public function keyIsInvalid(Request $request)
+    public function keyIsInvalid($api_key)
     {
         // Если пользователь с таким ключом не найден
-        if (
-            !User::getByApiKey($request->getHeader('X-Authorization')[0])
-        ) {
+        if (!BaseUser::getByApiKey($api_key)) {
             return true;
         }
 
