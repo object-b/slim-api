@@ -17,6 +17,7 @@
         "illuminate/database": "^5.8",
         "illuminate/pagination": "^5.8",
         "monolog/monolog": "^1.17",
+        "robmorgan/phinx": "^0.10.8",
         "slim/php-view": "^2.0",
         "slim/slim": "^3.1",
         "symfony/var-dumper": "^4.3",
@@ -35,6 +36,7 @@
         "phpunit/phpunit": ">=5.0"
     },
     "autoload-dev": {
+        "classmap": ["database/"],
         "psr-4": {
             "Tests\\": "tests/"
         }

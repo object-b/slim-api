@@ -21,6 +21,7 @@ return [
             'database' => env('DB_NAME'),
             'username' => env('DB_USER'),
             'password' => env('DB_PASS'),
+            'port'     => '3306',
         ],
 
         // Monolog settings

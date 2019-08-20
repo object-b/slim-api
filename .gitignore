@@ -3,3 +3,4 @@
 !/logs/README.md
 .env
 .htaccess
+.DS_Store

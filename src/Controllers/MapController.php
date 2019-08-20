@@ -108,7 +108,7 @@ class MapController
         $dates = [];
 
         for ($i = 0; $i < 100; $i++) { 
-            $dates[$i] = $faker->dateTimeBetween('-5 years');
+            $dates[$i] = $faker->dateTimeBetween('-7 years');
         }
         sort($dates);
 
