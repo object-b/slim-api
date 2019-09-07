@@ -14,7 +14,7 @@ cp .env.example .env
 php vendor/bin/phinx migrate
 ```
 
-Создание миграций
+Пример: Создание миграций
 
 ```
 php vendor/bin/phinx create CreateObjectsTable

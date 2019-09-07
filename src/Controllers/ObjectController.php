@@ -10,26 +10,42 @@ use App\Models\Object\Status as ObjectStatus;
 use App\Models\Object\Description;
 use App\Models\Object\Event;
 use App\Models\User\BaseUser;
+use App\Models\User\Role;
 use \Illuminate\Pagination\Paginator;
 
 class ObjectController
 {
     protected $apiKey = '';
+    protected $user;
 
     public function __construct($c)
     {
         $this->apiKey = $c->request->getHeader('X-Authorization')[0];
+        $this->user = BaseUser::getByApiKey($this->apiKey);
     }
 
     public function getAll($request, $response, $args)
     {
         $data = [];
         $page = ($request->getParam('page', 0) > 0) ? $request->getParam('page') : 1;
+        
         // Количество объектов на страницу
         $limit = 10;
+        
         // Задаем изначальную страницу для laravel paginate
         Paginator::currentPageResolver(function () use ($page) { return $page; });
+        
         // Получаем определенное кол-во объектов в соответствие с условием
+        if ($this->user->user_role_id == Role::ADMIN) {
+            $objects = BaseObject::orderBy('created_at', 'desc')->get();
+
+            return $response->withJson([
+                'cols' => $objects->first()->getConnection()->getSchemaBuilder()->getColumnListing('objects'),
+                'rows' => $objects,
+            ], 200);
+        }
+
+        // Для всех
         $objects = BaseObject::where([
             ['object_status_id', '!=', ObjectStatus::BANNED],
         ])->orderBy('created_at', 'desc')->paginate($limit);
