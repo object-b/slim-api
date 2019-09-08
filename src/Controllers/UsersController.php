@@ -21,7 +21,7 @@ class UsersController
         $this->apiKey = $c->request->getHeader('X-Authorization')[0];
     }
 
-    public function getAll($request, $response, $args)
+    public function index($request, $response, $args)
     {
         $data = [];
         $users = BaseUser::orderBy('id', 'desc')->get();

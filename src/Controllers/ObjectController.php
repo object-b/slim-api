@@ -25,7 +25,7 @@ class ObjectController
         $this->isAdmin = BaseUser::getByApiKey($this->apiKey)->user_role_id === Role::ADMIN;
     }
 
-    public function getAll($request, $response, $args)
+    public function index($request, $response, $args)
     {
         $v = new Validator($request->getQueryParams());
         $v->rule('numeric', 'page');
@@ -57,7 +57,7 @@ class ObjectController
                 'id' => $object->id,
                 'status' => $object->status->name,
                 'author' => $object->creator->name,
-                'resolver' => $object->resolver->name,
+                'resolver' => !empty($object->resolver->name) ? $object->resolver->name : null,
                 'date_created' => $object->created_at,
                 'date_created_human' => $this->getDate($object->created_at),
                 'date_closed' => $object->closed_at,
@@ -86,6 +86,32 @@ class ObjectController
     }
 
     public function getOne($request, $response, $args)
+    {
+        $v = new Validator($request->getQueryParams());
+        $v->rule('integer', 'id');
+
+        if (!$v->validate()) {
+            return $v->errors();
+        }
+
+        $row = BaseObject::find($args['id']);
+
+        return $response->withJson([
+            'data' => $row,
+        ], 200);
+    }
+
+    public function update($request, $response, $args)
+    {
+        $id = $args['id'];
+        $data = $request->getParsedBody();
+
+        $result = BaseObject::where('id', $id)->update($data);
+
+        return $response->withJson($result, 200);
+    }
+
+    public function show($request, $response, $args)
     {
         try {
             $object = BaseObject::findOrFail($args['id']);

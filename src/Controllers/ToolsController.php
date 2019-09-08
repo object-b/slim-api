@@ -10,7 +10,7 @@ use App\Models\Object\Event;
 use App\Models\User\BaseUser;
 use Faker\Factory;
 
-class AdminController
+class ToolsController
 {
     public function fakeCreate()
     {
