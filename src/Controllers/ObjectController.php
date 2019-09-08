@@ -12,20 +12,28 @@ use App\Models\Object\Event;
 use App\Models\User\BaseUser;
 use App\Models\User\Role;
 use \Illuminate\Pagination\Paginator;
+use Valitron\Validator;
 
 class ObjectController
 {
     protected $apiKey = '';
-    protected $user;
+    protected $isAdmin = false;
 
     public function __construct($c)
     {
         $this->apiKey = $c->request->getHeader('X-Authorization')[0];
-        $this->user = BaseUser::getByApiKey($this->apiKey);
+        $this->isAdmin = BaseUser::getByApiKey($this->apiKey)->user_role_id === Role::ADMIN;
     }
 
     public function getAll($request, $response, $args)
     {
+        $v = new Validator($request->getQueryParams());
+        $v->rule('numeric', 'page');
+
+        if (!$v->validate()) {
+            return $v->errors();
+        }
+
         $data = [];
         $page = ($request->getParam('page', 0) > 0) ? $request->getParam('page') : 1;
         
@@ -35,56 +43,50 @@ class ObjectController
         // Задаем изначальную страницу для laravel paginate
         Paginator::currentPageResolver(function () use ($page) { return $page; });
         
-        // Получаем определенное кол-во объектов в соответствие с условием
-        if ($this->user->user_role_id == Role::ADMIN) {
-            $objects = BaseObject::orderBy('created_at', 'desc')->get();
-
-            return $response->withJson([
-                'cols' => $objects->first()->getConnection()->getSchemaBuilder()->getColumnListing('objects'),
-                'rows' => $objects,
-            ], 200);
+        if ($this->isAdmin) {
+            $objects = BaseObject::orderBy('id', 'desc')->get();
+        } else {
+            // Получаем определенное кол-во объектов в соответствие с условием
+            $objects = BaseObject::where([
+                ['object_status_id', '!=', ObjectStatus::BANNED],
+            ])->orderBy('created_at', 'desc')->paginate($limit);
         }
 
-        // Для всех
-        $objects = BaseObject::where([
-            ['object_status_id', '!=', ObjectStatus::BANNED],
-        ])->orderBy('created_at', 'desc')->paginate($limit);
-
-        // Fake object
-        // $data[] = [
-        //     'id' => 999,
-        //     'status' => BaseObject::first()->status->name,
-        //     'author' => BaseObject::first()->user->name,
-        //     'date' => $this->getDate(BaseObject::first()->created_at),
-        //     'firstImage' => '',
-        //     'type' => 'Бытовые отходы, стекло, пластик, продукты',
-        //     'size' => 'Машина',
-        // ];
-
-        foreach ($objects as $ob) {
-            $data[] = [
-                'id' => $ob->id,
-                'status' => $ob->status->name,
-                'author' => $ob->creator->name,
-                'date' => $this->getDate($ob->created_at),
-                'firstImage' => 'https://via.placeholder.com/'. rand(300, 500) . 'x' . rand(300, 500),
+        foreach ($objects as $object) {
+            $temp = [
+                'id' => $object->id,
+                'status' => $object->status->name,
+                'author' => $object->creator->name,
+                'resolver' => $object->resolver->name,
+                'date_created' => $object->created_at,
+                'date_created_human' => $this->getDate($object->created_at),
+                'date_closed' => $object->closed_at,
+                'date_closed_human' => $this->getDate($object->closed_at),
+                'first_image' => 'https://via.placeholder.com/'. rand(300, 500) . 'x' . rand(300, 500),
                 'type' => 'Бытовые отходы, стекло, пластик, продукты',
                 'size' => 'Машина',
             ];
+
+            $data[] = $temp;
+        }
+
+        if ($this->isAdmin) {
+            return $response->withJson([
+                'data' => $data,
+            ], 200);
         }
 
         return $response->withJson([
             'total' => $objects->total(),
-            'currentPage' => $objects->currentPage(),
-            'maxPages' => $objects->lastPage(),
-            'hasMorePages' => $objects->hasMorePages(),
+            'current_page' => $objects->currentPage(),
+            'max_pages' => $objects->lastPage(),
+            'has_more_pages' => $objects->hasMorePages(),
             'data' => $data,
         ], 200);
     }
 
     public function getOne($request, $response, $args)
     {
-        //$user = BaseUser::getByApiKey($this->apiKey);
         try {
             $object = BaseObject::findOrFail($args['id']);
         } catch (\Exception $e) {
@@ -96,10 +98,10 @@ class ObjectController
 
         foreach ($object->events as $ev) {
             $events[] = [
-                'userName' => $ev->user->name,
+                'user_name' => $ev->user->name,
                 'status' => $ev->status->name,
                 'description' => $ev->description->description,
-                'date' => $this->getDate($ev->created_at),
+                'date_created' => $this->getDate($ev->created_at),
             ];
         }
 
@@ -135,8 +137,6 @@ class ObjectController
             'object_id' => $object->id,
             'display_name' => $body['address']['display_name'],
             'city' => $body['address']['city'],
-            'city_district' => $body['address']['city_district'], // Городской район, может быть пустым
-            'county' => $body['address']['county'], // Округ, может быть пустым
             'state' => $body['address']['state'],
             'country' => $body['address']['country'],
             'latitude' => $body['address']['latitude'],
@@ -166,14 +166,18 @@ class ObjectController
         return $response->withJson((bool)$object_status, 200);
     }
 
-    public function getDate($created_at)
+    public function getDate($date)
     {
+        if (!$date) {
+           return null;
+        }
+
         $monthes = [
             1 => 'января', 2 => 'февраля', 3 => 'марта', 4 => 'апреля',
             5 => 'мая', 6 => 'июня', 7 => 'июля', 8 => 'августа',
             9 => 'сентября', 10 => 'октября', 11 => 'ноября', 12 => 'декабря',
         ];
 
-        return "{$created_at->day} {$monthes[$created_at->month]} {$created_at->year}";
+        return "{$date->day} {$monthes[$date->month]} {$date->year}";
     }
 }

@@ -11,8 +11,6 @@ class CreateObjectAddresses extends AbstractMigration
             ->addColumn('object_id', 'integer')
             ->addColumn('display_name', 'text')
             ->addColumn('city', 'string', ['null' => true])
-            ->addColumn('city_district', 'string', ['null' => true])
-            ->addColumn('county', 'string', ['null' => true])
             ->addColumn('state', 'string', ['null' => true])
             ->addColumn('country', 'string', ['null' => true])
             ->addColumn('latitude', 'decimal', ['precision' => '12', 'scale' => '6'])
