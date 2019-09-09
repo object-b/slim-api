@@ -11,6 +11,7 @@ use App\Models\Object\Description;
 use App\Models\Object\Event;
 use App\Models\User\BaseUser;
 use Carbon\Carbon;
+use Valitron\Validator;
 
 class UsersController
 {
@@ -19,6 +20,39 @@ class UsersController
     public function __construct($c)
     {
         $this->apiKey = $c->request->getHeader('X-Authorization')[0];
+    }
+    
+    public function getOne($request, $response, $args)
+    {
+        $v = new Validator($request->getQueryParams());
+        $v->rule('integer', 'id');
+
+        if (!$v->validate()) {
+            return $v->errors();
+        }
+
+        $row = BaseUser::find($args['id']);
+
+        return $response->withJson([
+            'data' => $row,
+        ], 200);
+    }
+
+    public function update($request, $response, $args)
+    {
+        $v = new Validator($request->getQueryParams());
+        $v->rule('integer', 'id');
+
+        if (!$v->validate()) {
+            return $v->errors();
+        }
+
+        $id = $args['id'];
+        $data = $request->getParsedBody();
+
+        $result = BaseUser::where('id', $id)->update($data);
+
+        return $response->withJson($result, 200);
     }
 
     public function index($request, $response, $args)

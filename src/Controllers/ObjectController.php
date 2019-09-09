@@ -103,6 +103,13 @@ class ObjectController
 
     public function update($request, $response, $args)
     {
+        $v = new Validator($request->getQueryParams());
+        $v->rule('integer', 'id');
+
+        if (!$v->validate()) {
+            return $v->errors();
+        }
+
         $id = $args['id'];
         $data = $request->getParsedBody();
 
@@ -187,9 +194,9 @@ class ObjectController
 
     public function destroy($request, $response, $args)
     {
-        $object_status = BaseObject::destroy($args['id']);
+        $status = BaseObject::destroy($args['id']);
         
-        return $response->withJson((bool)$object_status, 200);
+        return $response->withJson((bool)$status, 200);
     }
 
     public function getDate($date)

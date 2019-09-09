@@ -23,6 +23,8 @@ return function (App $app) {
 
     $app->group('/api/admin', function () use ($app) {
         $app->get('/users', UsersController::class . ':index');
+        $app->get('/users/{id:[0-9]+}', UsersController::class . ':getOne');
+        $app->put('/users/{id:[0-9]+}', UsersController::class . ':update');
         
         $app->get('/objects', ObjectController::class . ':index');
         $app->get('/objects/{id:[0-9]+}', ObjectController::class . ':getOne');
