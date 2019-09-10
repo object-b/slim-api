@@ -3,10 +3,13 @@
 use Slim\App;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\AuthAdminMiddleware;
-use App\Controllers\ObjectController;
 use App\Controllers\MapController;
 use App\Controllers\ToolsController;
-use App\Controllers\UsersController;
+
+use App\Controllers\Object\ObjectController;
+
+use App\Controllers\User\UserController;
+use App\Controllers\User\UserRoleController;
 
 return function (App $app) {
     $app->group('/api', function () use ($app) {
@@ -22,9 +25,13 @@ return function (App $app) {
     })->add(new AuthMiddleware());
 
     $app->group('/api/admin', function () use ($app) {
-        $app->get('/users', UsersController::class . ':index');
-        $app->get('/users/{id:[0-9]+}', UsersController::class . ':getOne');
-        $app->put('/users/{id:[0-9]+}', UsersController::class . ':update');
+        $app->get('/users', UserController::class . ':index');
+        $app->get('/users/{id:[0-9]+}', UserController::class . ':getOne');
+        $app->put('/users/{id:[0-9]+}', UserController::class . ':update');
+
+        $app->get('/users/roles', UserRoleController::class . ':index');
+        $app->get('/users/roles/{id:[0-9]+}', UserRoleController::class . ':getOne');
+        $app->put('/users/roles/{id:[0-9]+}', UserRoleController::class . ':update');
         
         $app->get('/objects', ObjectController::class . ':index');
         $app->get('/objects/{id:[0-9]+}', ObjectController::class . ':getOne');

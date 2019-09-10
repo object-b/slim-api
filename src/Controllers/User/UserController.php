@@ -1,19 +1,15 @@
 <?php
 
-namespace App\Controllers;
+namespace App\Controllers\User;
 
 use Slim\Http\Request;
 use Slim\Http\Response;
-use App\Models\Object\BaseObject;
-use App\Models\Object\Address;
-use App\Models\Object\Status as ObjectStatus;
-use App\Models\Object\Description;
-use App\Models\Object\Event;
 use App\Models\User\BaseUser;
+use App\Models\User\Role;
 use Carbon\Carbon;
 use Valitron\Validator;
 
-class UsersController
+class UserController
 {
     protected $apiKey = '';
 
@@ -24,14 +20,18 @@ class UsersController
     
     public function getOne($request, $response, $args)
     {
-        $v = new Validator($request->getQueryParams());
-        $v->rule('integer', 'id');
+        $id = $args['id'];
+        $row = BaseUser::find($id);
 
-        if (!$v->validate()) {
-            return $v->errors();
-        }
+        return $response->withJson([
+            'data' => $row,
+        ], 200);
+    }
 
-        $row = BaseUser::find($args['id']);
+    public function getOneRole($request, $response, $args)
+    {
+        $id = $args['id'];
+        $row = Role::find($id);
 
         return $response->withJson([
             'data' => $row,
@@ -40,17 +40,20 @@ class UsersController
 
     public function update($request, $response, $args)
     {
-        $v = new Validator($request->getQueryParams());
-        $v->rule('integer', 'id');
-
-        if (!$v->validate()) {
-            return $v->errors();
-        }
-
         $id = $args['id'];
         $data = $request->getParsedBody();
 
         $result = BaseUser::where('id', $id)->update($data);
+
+        return $response->withJson($result, 200);
+    }
+
+    public function updateRole($request, $response, $args)
+    {
+        $id = $args['id'];
+        $data = $request->getParsedBody();
+
+        $result = Role::where('id', $id)->update($data);
 
         return $response->withJson($result, 200);
     }
@@ -77,6 +80,16 @@ class UsersController
 
         return $response->withJson([
             'data' => $data,
+        ], 200);
+    }
+
+    public function indexRoles($request, $response, $args)
+    {
+        $data = [];
+        $users_roles = Role::all();
+
+        return $response->withJson([
+            'data' => $users_roles,
         ], 200);
     }
 }
