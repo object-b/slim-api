@@ -7,6 +7,7 @@ use Slim\Http\Response;
 use App\Models\Object\BaseObject;
 use App\Models\Object\Address;
 use App\Models\Object\Status as ObjectStatus;
+use App\Models\Object\Size as ObjectSize;
 use App\Models\Object\Description;
 use App\Models\Object\Event;
 use App\Models\User\BaseUser;
@@ -63,8 +64,8 @@ class ObjectController
                 'date_closed' => $object->closed_at,
                 'date_closed_human' => $this->getDate($object->closed_at),
                 'first_image' => 'https://via.placeholder.com/'. rand(300, 500) . 'x' . rand(300, 500),
-                'type' => 'Бытовые отходы, стекло, пластик, продукты',
-                'size' => 'Машина',
+                'type' => 'Заглушка',
+                'size' => $object->size->name,
             ];
 
             $data[] = $temp;
@@ -120,6 +121,13 @@ class ObjectController
 
     public function show($request, $response, $args)
     {
+        $v = new Validator($request->getQueryParams());
+        $v->rule('integer', 'id');
+
+        if (!$v->validate()) {
+            return $v->errors();
+        }
+
         try {
             $object = BaseObject::findOrFail($args['id']);
         } catch (\Exception $e) {
@@ -149,7 +157,7 @@ class ObjectController
                 'https://placekitten.com/350/350',
             ],
             'type' => 'Заглушка',
-            'size' => 'Заглушка',
+            'size' => $object->size->name,
         ];
 
         return $response->withJson($data, 200);
@@ -157,39 +165,71 @@ class ObjectController
 
     public function store($request, $response, $args)
     {
+        $v = new Validator($request->getParsedBody());
+        $v->rules([
+            'in' => [
+                ['size', ObjectSize::SIZES_UNIQID],
+            ],
+            'lengthMax' => [
+                ['title', 200],
+                ['description', 1000],
+            ],
+            'numeric' => [
+                ['latitude'],
+                ['longitude'],
+            ],
+            'required' => [
+                ['size'],
+                ['title'],
+                ['description'],
+                ['address.display_name'],
+                ['address.city'],
+                ['address.state'],
+                ['address.country'],
+                ['address.latitude'],
+                ['address.longitude'],
+            ],
+        ]);
+
+        if (!$v->validate()) {
+            return $v->errors();
+        }
+
         $user = BaseUser::getByApiKey($this->apiKey);
         $body = $request->getParsedBody();
+        $address = $body['address'];
 
-        $object = BaseObject::create([
+        $createdObject = BaseObject::create([
             'creator_id' => $user->id,
             'points' => 0,
             'object_status_id' => ObjectStatus::PUBLISHED,
+            'object_size_id' => ObjectSize::findByRef($body['size'])->id,
         ]);
 
-        $address = Address::create([
-            'object_id' => $object->id,
-            'display_name' => $body['address']['display_name'],
-            'city' => $body['address']['city'],
-            'state' => $body['address']['state'],
-            'country' => $body['address']['country'],
-            'latitude' => $body['address']['latitude'],
-            'longitude' => $body['address']['longitude'],
+        $createdAddress = Address::create([
+            'object_id' => $createdObject->id,
+            'display_name' => $address['display_name'],
+            'city' => $address['city'],
+            'state' => $address['state'],
+            'country' => $address['country'],
+            'latitude' => $address['latitude'],
+            'longitude' => $address['longitude'],
         ]);
 
-        $description = Description::create([
-            'object_id' => $object->id,
-            'title' => $body['description']['title'],
-            'description' => $body['description']['description'],
+        $createdDesc = Description::create([
+            'object_id' => $createdObject->id,
+            'title' => $body['title'],
+            'description' => $body['description'],
         ]);
 
-        $event = Event::create([
-            'object_id' => $object->id,
+        $createdEvent = Event::create([
+            'object_id' => $createdObject->id,
             'user_id' => $user->id,
             'object_status_id' => ObjectStatus::PUBLISHED,
-            'object_description_id' => $description->id,
+            'object_description_id' => $createdDesc->id,
         ]);
 
-        return $response->withJson($object->id, 201);
+        return $response->withJson($createdObject->id, 201);
     }
 
     public function destroy($request, $response, $args)

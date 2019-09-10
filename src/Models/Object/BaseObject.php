@@ -14,7 +14,7 @@ class BaseObject extends Model
 
     public function address()
     {
-        return $this->hasOne('App\Models\Address', 'object_id');
+        return $this->hasOne('App\Models\Object\Address', 'object_id');
     }
 
     public function description()
@@ -30,6 +30,11 @@ class BaseObject extends Model
     public function status()
     {
         return $this->hasOne('App\Models\Object\Status', 'id', 'object_status_id');
+    }
+
+    public function size()
+    {
+        return $this->hasOne('App\Models\Object\Size', 'id', 'object_size_id');
     }
 
     public function creator()
