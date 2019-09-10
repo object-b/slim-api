@@ -182,12 +182,12 @@ class ObjectController
                 ['size'],
                 ['title'],
                 ['description'],
-                ['address.display_name'],
-                ['address.city'],
-                ['address.state'],
-                ['address.country'],
-                ['address.latitude'],
-                ['address.longitude'],
+                ['address_full'],
+                ['address_city'],
+                ['address_state'],
+                ['address_country'],
+                ['address_latitude'],
+                ['address_longitude'],
             ],
         ]);
 
@@ -197,7 +197,6 @@ class ObjectController
 
         $user = BaseUser::getByApiKey($this->apiKey);
         $body = $request->getParsedBody();
-        $address = $body['address'];
 
         $createdObject = BaseObject::create([
             'creator_id' => $user->id,
@@ -208,12 +207,12 @@ class ObjectController
 
         $createdAddress = Address::create([
             'object_id' => $createdObject->id,
-            'display_name' => $address['display_name'],
-            'city' => $address['city'],
-            'state' => $address['state'],
-            'country' => $address['country'],
-            'latitude' => $address['latitude'],
-            'longitude' => $address['longitude'],
+            'display_name' => $body['address_full'],
+            'city' => $body['address_city'],
+            'state' => $body['address_state'],
+            'country' => $body['address_country'],
+            'latitude' => $body['address_latitude'],
+            'longitude' => $body['address_longitude'],
         ]);
 
         $createdDesc = Description::create([
